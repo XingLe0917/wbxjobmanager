@@ -1,0 +1,71 @@
+#!/bin/bash
+############################################################
+#
+#  alert_mail_11g.sh
+#
+#     updated on Jan 15 2013 for checking "unusable index" by Britto(bsusaima@cisco.com)
+#
+#     This script is used to check alert log file
+#     input:
+#      1)   Oracle Service Name
+#     output:
+#      1)   send email to dba if there is ORA- error msg
+#
+#
+############################################################
+
+. /home/oracle/.bash_profile
+
+export HOST=`/bin/uname -n`
+export MAIL=/bin/mailx
+export NODE_NO=`hostname | sed -e "s/^.*\(.\)$/\1/"`
+
+export DISTLIST=cwopsdba@cisco.com
+#export DISTLIST=canny.hua@cisco.com
+
+if [ $# != 1 ]; then
+  echo
+  echo "Usage: alert_mail.sh ORACLE_SID "
+  echo
+  exit
+fi
+
+export ORACLE_SID="$1"
+# verify if the passed DB_NAME is correct
+if [ `ps -ef | grep pmon | grep -c ${ORACLE_SID}` -le 0 ]; then
+  # the passed argument is not a valid ORACLE_SID
+  echo -e "Hi,\n\nThe passed ${ORACLE_SID} is not a valid ORACLE_SID. Verify...\n\n~DBA Team." | mailx  -s "ALERT LOG ORA-ERROR  :  ${ORACLE_SID}@${HOST} Database Alert errors " $DISTLIST
+  exit 0
+fi
+export DB_NAME=`echo ${ORACLE_SID} | sed -e "s/.$//g"`
+
+export _DUMP_DIR="${ORACLE_BASE}/diag/rdbms/${DB_NAME}/${ORACLE_SID}/trace"
+if [ ! -d "${_DUMP_DIR}" ]; then
+  # dump directory is not valid for the passed ORACLE_SID
+  echo -e "Hi,\n\nThe background_dump_dest (${_DUMP_DIR}) is not valid for ${ORACLE_SID}. Verify...\n\n~DBA Team." | mailx  -s "ALERT LOG ORA-ERROR  :  ${ORACLE_SID}@${HOST} Database Alert errors " $DISTLIST
+  exit 0
+fi
+export ORA_LOG_NAME="${_DUMP_DIR}/alert_${ORACLE_SID}.log"
+export HIST_NAME="${_DUMP_DIR}/alert_${ORACLE_SID}.hist"
+export _WORK_LOG="${_DUMP_DIR}/alert_work.log"
+
+if [ -f ${ORA_LOG_NAME} ]
+then
+  mv ${ORA_LOG_NAME} ${_WORK_LOG}
+  cat ${_WORK_LOG} >> ${HIST_NAME}
+  cat /dev/null > /tmp/alert.err
+  
+  # check "have been marked unusable" in the alert log
+  egrep "have been marked unusable" ${_WORK_LOG} >> /tmp/alert.err
+
+  # check for ORA- errors
+  grep "ORA-" ${_WORK_LOG} | egrep -v "ORA-279|ORA-308|ORA-1112|ORA-1642|ORA-01403|ORA-06512|ORA-12012|ORA-1142|ORA-3217" >> /tmp/alert.err
+fi
+
+if [ -s /tmp/alert.err ]
+then
+  mailx  -s "ALERT LOG ORA-ERROR  :  ${ORACLE_SID}@${HOST} Database Alert errors " $DISTLIST < /tmp/alert.err
+fi
+
+rm -rf /tmp/alert.err
+

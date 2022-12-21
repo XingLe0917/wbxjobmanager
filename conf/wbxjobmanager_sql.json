@@ -1,0 +1,19 @@
+{"GET_JOBMANGERINSTNACE_BYHOSTNAME":"SELECT status,opstatus FROM wbxjobmanagerinstance WHERE host_name=:host_name",
+  "INSERT_JOBMANGERINSTNACE":"INSERT INTO wbxjobmanagerinstance(host_name, status, opstatus, lastupdatetime) VALUES(:host_name, :status, :opstatus, sysdate)",
+  "UPDATE_JOBMANGERINSTNACE_STATUS":"UPDATE wbxjobmanagerinstance SET status=case when :status='RUNNING' and opstatus=1 then status else :status end, opstatus=case when :status = 'RUNNING' and opstatus=1 then opstatus else :opstatus end, lastupdatetime=sysdate WHERE host_name=:host_name",
+  "INSERT_JOBINSTANCE":"INSERT INTO wbxjobinstance(jobid, templateid, host_name, jobname, job_type, commandstr, jobruntime, status,errormsg) VALUES(SYS_GUID(), :templateid, :host_name, :jobname, :job_type, :commandstr, :jobruntime, :status, :errormsg)",
+  "UPDATE_JOBINSTANCE":"UPDATE wbxjobinstance SET jobname=:jobname, templateid=:templateid, job_type=:job_type, jobruntime=:jobruntime, status=:status, errormsg=:errormsg WHERE host_name=:host_name AND commandstr=:commandstr",
+  "UPDATE_JOBINSTANCE_STATUS":"UPDATE wbxjobinstance SET status=:status, errormsg=:errormsg WHERE jobid=:jobid",
+  "START_JOBINSTANCE":"UPDATE wbxjobinstance SET status='RUNNING', errormsg=NULL, next_run_time=:next_run_time WHERE jobid=:jobid",
+  "DELETE_JOBINSTANCE_BY_HOSTNAME":"UPDATE wbxjobinstance SET status='DELETED' WHERE host_name=:host_name and status not in ('PENDING','FAILED') AND templateid IS NOT NULL",
+  "GET_JOBINSTANCE_BY_COMMANDSTR": "SELECT jobid, templateid, host_name, jobname, commandstr, jobruntime, status, errormsg FROM wbxjobinstance WHERE host_name=:host_name AND commandstr=:commandstr",
+  "LIST_JOBINSTANCE_BY_HOSTNAME": "SELECT jobid, templateid, host_name, jobname, job_type, commandstr, jobruntime, status, errormsg FROM wbxjobinstance WHERE host_name=:host_name",
+  "LIST_JOBINSTANCE_BY_JOBNAME": "SELECT jobid, templateid, host_name, jobname, job_type, commandstr, jobruntime, status, errormsg FROM wbxjobinstance WHERE jobname=:jobname",
+  "LIST_JOBTEMPLATE":"SELECT templateid, jobname, job_level,appln_support_code,application_type,db_type,db_names,job_type,filename,parameter,jobruntime,status,description FROM wbxjobtemplate WHERE db_vendor=:db_vendor",
+
+  "LIST_DBNAMES_BY_HOSTNAME":"SELECT di.db_name,ii.instance_name,di.appln_support_code, di.db_type, di.application_type FROM instance_info ii, database_info di WHERE ii.host_name=:host_name AND di.db_type in ('PROD','BTS_PROD') AND ii.db_name=di.db_name AND ii.trim_host=di.trim_host",
+  "LIST_SRC_SPPORTS_BY_HOSTNAME":"SELECT  distinct si.port,di.appln_support_code, di.db_type, di.application_type FROM shareplex_info si, instance_info ii, database_info di WHERE si.src_host=:host_name AND di.db_type in ('PROD','BTS_PROD') AND si.src_host=ii.host_name AND si.src_db=ii.db_name AND ii.db_name=di.db_name AND ii.trim_host=di.trim_host",
+  "LIST_TGT_SPPORTS_BY_HOSTNAME":"SELECT  distinct si.port,di.appln_support_code, di.db_type, di.application_type FROM shareplex_info si, instance_info ii, database_info di WHERE si.tgt_host=:host_name AND di.db_type in ('PROD','BTS_PROD') AND si.tgt_host=ii.host_name AND si.tgt_db=ii.db_name AND ii.db_name=di.db_name AND ii.trim_host=di.trim_host",
+  "GET_FIRST_NODE_IN_RAC":"select min(host_name) keep (dense_rank first order by host_name) from host_info where (nvl(scan_name,'NULL'),trim_host) in (select nvl(scan_name,'NULL'),trim_host from host_info where host_name=:host_name)",
+  "GET_SERVER_DB_VENDOR": "SELECT distinct di.db_vendor FROM instance_info ii, database_info di WHERE ii.host_name=:host_name AND di.db_type in ('PROD','BTS_PROD') AND ii.db_name=di.db_name AND ii.trim_host=di.trim_host"
+}

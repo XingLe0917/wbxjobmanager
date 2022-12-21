@@ -1,0 +1,21 @@
+#!/bin/bash
+# script to move the osw output file to staging
+# version 2: Britto S (bsusaima@cisco.com) - 27-Apr-2017
+
+_EMAIL_ID=cwopsdba@cisco.com
+_OSW_INSTALL_DIR=/var/oswbb
+_OSW_ARCHIVAL_BACKUP_DAYS=30
+_OSW_ARCHIVAL_DIR=/staging/oswbba/$(hostname -s)/archive
+
+# move to backup archive
+cd ${_OSW_INSTALL_DIR}/archive
+find . -depth -name "*.dat.gz" -type f | cpio -pmd ${_OSW_ARCHIVAL_DIR} 2> /dev/null
+
+# remove the files on /var/crash
+# not needed as the osw itself takes care of it
+####find . -name "*" -type f -mtime +${_OSW_LOCAL_BACKUP_DAYS} -exec rm -rf {} \;
+
+# remove file on staging
+cd ${_OSW_ARCHIVAL_DIR}
+find . -name "*" -type f -mtime +${_OSW_ARCHIVAL_BACKUP_DAYS} -exec rm -rf {} \;
+

@@ -1,0 +1,7 @@
+{"depotdb_username":"depot",
+  "depotdb_password":"pass",
+  "pidfile_dir":"/var/run/wbxjobmanager/",
+  "pccp_depot_connection_api": "http://pccp.webex.com.cn:9000/api/get_db_metadata",
+  "get_CI_token_api": "https://idbroker.webex.com/idb/oauth2/v1/access_token?grant_type=client_credentials&scope=identity:myprofile_read",
+  "pccp_get_token_authorization": "Basic Basic Q2IyMGNkYmVkNjFiOTU3MjVhMGZlZjJmN2M5ZTkwNjZjYzdlZmIwYTNhYWY3YTE2OTdlMzUyZjA1NmJiOTNlMGQ6ZTllNWU5ZTE2YWI4ZDFkOGFjZTIxMGFhMzlhYTkxYTdlOWQ3NWYwZDMyYjc4ZDY1NzA3Mzg2Mzc4OWI5NTFjOQ=="
+}

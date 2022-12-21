@@ -1,0 +1,76 @@
+############################################################
+#
+#  alert_mail.sh
+#
+#     This script is used to check alert log file
+#     input:
+#      1)   Oracle Service Name
+#     output:
+#      1)   send email to dba if there is ORA- error msg
+#
+#
+############################################################
+
+if [ $# != 1 ]; then
+  echo
+  echo "Usage: alert_mail.sh ORACLE_SID "
+  echo
+  exit
+fi
+
+. /home/oracle/.bash_profile
+HOST=`/bin/uname -n`
+MAIL=/bin/mailx
+DISTLIST=cwopsdba@cisco.com
+#DISTLIST=jingx@cisco.com
+export HOST MAIL DISTLIST
+
+ORACLE_SID=$1
+export ORACLE_SID
+NODE_NO=`hostname | sed -e "s/^.*\(.\)$/\1/"`
+ORA_LOG_NAME=alert_${ORACLE_SID}.log
+export ORA_LOG_NAME
+HIST_NAME=alert_${ORACLE_SID}.hist
+export HIST_NAME
+
+cd ${ORACLE_BASE}/diag/rdbms/*/$ORACLE_SID/trace
+if [ -f ${ORA_LOG_NAME} ]
+then
+   mv ${ORA_LOG_NAME} alert_work.log
+   cat alert_work.log >> ${HIST_NAME}
+   grep -B1 ORA- alert_work.log | grep -v "ORA-279" | grep -v "ORA-308" | grep -v "ORA-1112" | grep -v "ORA-1642" | grep -v "ORA-01403" | grep -v "ORA-06512" | grep -v "ORA-12012" | grep -v "ORA-1142" | grep -v "ORA-3217" > /tmp/alert.err
+fi
+
+if [ -s /tmp/alert.err ]
+then
+        mailx  -s " ALERT LOG ORA-ERROR  :  ${ORACLE_SID}@${HOST} Database Alert errors " $DISTLIST < /tmp/alert.err
+fi
+
+rm -f /tmp/alert.err
+rm -f /tmp/alert_work.log
+
+### ASM   Alert  log
+cd ${ORACLE_BASE}/diag/*/*/*/trace
+NODE_NO=`hostname|awk -F"." '{print $1}' |sed -e "s/^.*\(.\)$/\1/"`
+ORA_LOG_NAME=alert_+ASM${NODE_NO}.log
+HIST_NAME=alert_+ASM${NODE_NO}.hist
+export HIST_NAME
+
+if [ -f ${ORA_LOG_NAME} ]
+then
+    mv ${ORA_LOG_NAME} alert_work.log
+    cat alert_work.log >> ${HIST_NAME}
+    grep -B1 ORA- alert_work.log | grep -v "ORA-279" | grep -v "ORA-308" | grep -v "ORA-1112" | grep -v "ORA-1642" | grep -v "ORA-01403" | grep -v "ORA-06512" | grep -v "ORA-12012" | grep -v "ORA-1142" | grep -v "ORA-3217" > /tmp/alert.err
+fi
+
+if [ -s /tmp/alert.err ]
+then
+        mailx  -s " ALERT LOG ORA-ERROR  :  +ASM${NODE_NO}@${HOST} Database Alert errors " $DISTLIST < /tmp/alert.err
+fi
+
+rm -f /tmp/alert.err
+rm -f /tmp/alert_work.log
+
+
+
+

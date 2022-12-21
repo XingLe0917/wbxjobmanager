@@ -1,0 +1,33 @@
+##########################################################################
+# clean_ora_misc.sh
+#
+# Purpose:      This is shell program which will be used to check the status
+#               of applications registered with CRS.
+#
+# input:        1) mail to DBA account
+#
+# output:       1) log file for the process
+#
+# By:           Abhijit Gujare
+# date:          07/02/07
+#
+##########################################################################
+
+if [ $# != 1 ]; then
+echo
+echo "Usage: check_crs_proc.sh MAILTO"
+echo
+exit 0
+fi
+
+. /u00/app/admin/dbarea/.dbaprofile
+export MAILTO=$1@cisco.com
+$CRS_HOME/bin/crsstat | grep OFFLINE > /tmp/chk_crs_proc.log
+$CRS_HOME/bin/crsstat | grep UNKNOWN >> /tmp/chk_crs_proc.log
+
+if [[ -s /tmp/chk_crs_proc.log ]]; then
+
+mailx -s "CRS resource is offline" $MAILTO < /tmp/chk_crs_proc.log
+
+fi
+exit 0

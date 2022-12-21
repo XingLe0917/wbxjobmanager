@@ -1,0 +1,17 @@
+#!/bin/ksh
+
+ORACLE_BASE=/u00/app/oracle
+export ORACLE_BASE
+ORACLE_HOME=/u00/app/oracle/product/11.2.0/agent11g
+export ORACLE_HOME
+
+ret=`$ORACLE_HOME/bin/emctl  status agent|grep "Not Running"`
+
+if [ $? -eq 0 ]
+then
+  $ORACLE_HOME/bin/emctl start agent >>/tmp/gridagentstatus
+  mailx -s " Grid Control Agent Not Running,Restarted" cwopsdba@cisco.com,unix-sa@cisco.com</tmp/gridagentstatus
+fi
+
+exit
+

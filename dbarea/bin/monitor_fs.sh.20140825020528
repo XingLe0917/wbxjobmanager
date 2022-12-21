@@ -1,0 +1,63 @@
+#!/bin/bash
+
+export _DF=`echo /tmp/df_$$.txt`
+export _TMP_EMAIL=`echo /tmp/tmp_email_$$.txt`
+export _EMAIL=`echo /tmp/email_$$.txt`
+export _THRESHOLD=90
+
+cat /dev/null > ${_DF}
+
+# get the unix file system mount point information
+df -H | grep '%' | grep -vE 'Filesystem|tmpfs' | grep -v "^ " | awk '{ print $4 " " $5 " " $6 }' > ${_DF}
+
+# get the shared (NFS) mount point information and append it to the file
+df -H | grep '%' | grep -vE 'Filesystem|tmpfs' | grep "^ " | awk '{ print $3 " " $4 " " $5 }'    >> ${_DF}
+
+#cat ${_DF}
+
+cat /dev/null > ${_TMP_EMAIL}
+cat /dev/null > ${_EMAIL}
+_MAIL_SUB=
+
+while read output
+do
+#echo $output
+  usep=$(echo $output | awk '{ print $2}' | cut -d'%' -f1  )
+  partition=$(echo $output | awk '{ print $3 }' )
+avail=`echo $output |awk '{print $1}'`
+#echo "usep = ${usep}"
+#echo "partition = ${partition}"
+  if [ $usep -ge ${_THRESHOLD} ]; then
+       echo "`date`:$(hostname):$partition ($usep%): Available ($avail)" >> ${_TMP_EMAIL}
+	if [ $partition = "/sjrac_rman_vol" -o $partition = "/sjcon_rman_vol" -o $partition = "/sjracrpt_rman_vol" ]; then
+echo "" >> ${_TMP_EMAIL}
+echo "Deleting backup files older than 2 days" >> ${_TMP_EMAIL}
+echo "" >> ${_TMP_EMAIL}
+/opt/emc/scripts/clean.sh
+echo "Deleted old backup files" >> ${_TMP_EMAIL}
+echo "" >> ${_TMP_EMAIL}
+fi
+       _MAIL_SUB=`echo "${_MAIL_SUB} $partition ($usep%): Available ($avail)"`
+  fi
+done < ${_DF}
+
+# send an email if the temp_email file has a size greater than 0 bytes.
+if [ -s ${_TMP_EMAIL} ]
+then
+  #cat ${_TMP_EMAIL}
+  cat /dev/null > ${_EMAIL}
+  echo "Hi," >> ${_EMAIL}
+  echo ""  >> ${_EMAIL}
+  echo "The below file system(s) are running out of space. Please investigate."  >> ${_EMAIL}
+  echo ""  >> ${_EMAIL}
+  cat ${_TMP_EMAIL} >> ${_EMAIL}
+  echo ""  >> ${_EMAIL}
+  echo "Thanks,"  >> ${_EMAIL}
+  echo "DBA Team"  >> ${_EMAIL}
+  echo ""  >> ${_EMAIL}
+
+  cat ${_EMAIL}
+  mail -s "Urgent: Almost out of disk space on $(hostname). ${_MAIL_SUB} " cwopsdba@cisco.com < ${_EMAIL}
+
+fi
+

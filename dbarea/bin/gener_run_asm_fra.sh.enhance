@@ -1,0 +1,85 @@
+############################################################
+#
+#    gener_run_asm_fra.sh
+#
+#     This script is used to run general sql on all scripts
+#
+#     08/06/07 By Canny Hua
+#
+############################################################
+. /home/oracle/.asm_profile
+help_msg()
+{
+more <<EOF
+Usage:  gener_run.sh xxx (this xxx.sql need under /u00/app/admin/dbarea/sql)
+EOF
+}
+
+####################################################################
+#Main
+####################################################################
+ARGV=$1
+#echo $ARGV
+MAILLIST="cwopsdba@cisco.com"
+#MAILLIST="jingx@cisco.com"
+rm -rf $ADMIN_HOME/log/$ARGV.lst
+
+if [ "x$ARGV" = "x" ]
+then
+  help_msg
+  exit 0;
+else
+  if [ ! -f $ADMIN_HOME/sql/$ARGV.sql ]
+  then
+    help_msg
+    exit 0;
+  fi
+  if [ ! -f $ADMIN_HOME/sql/$ARGV-autocleanup.sql ]
+  then
+    help_msg
+    exit 0;
+  fi
+fi
+
+sqlplus -s sys/sysnotallow as sysdba << EOF
+@$ADMIN_HOME/sql/$ARGV.sql
+exit
+EOF
+
+mflag=`grep '[1-9]' $ADMIN_HOME/log/$ARGV.lst`
+if [ "X$mflag" = 'X' ]
+then
+  mflag=0
+else
+  mflag=2
+fi
+
+autocleanup()
+{
+export ORACLE_SID=racopdb1
+export ORACLE_HOME=/u00/app/oracle/product/11.2.0/db
+rman target sys/sysnotallow catalog  racopdb/rman@CAT11G01 << EOF
+delete noprompt archivelog until time 'sysdate -2';
+EXIT
+EOF
+}
+
+if [ $mflag -ge "1" ] ;then
+ echo "
+
+NOTE: Automated clean up Archive job is running now, please wait for a while to check email for result">> $ADMIN_HOME/log/$ARGV.lst
+  mailx -s "ALERT- Archive destination alarm!!-  $HOSTNAME " $MAILLIST -- -f ArchiveAutoMaintenace@cisco.com < $ADMIN_HOME/log/$ARGV.lst
+  echo  "`autocleanup`" >$ADMIN_HOME/log/$ARGV-autocleanup.lst
+   if [ -n "`cat $ADMIN_HOME/log/$ARGV-autocleanup.lst | grep "Deleted.*objects"`" ] ;then
+sqlplus -s sys/sysnotallow as sysdba << EOF
+@$ADMIN_HOME/sql/$ARGV-autocleanup.sql
+exit
+EOF
+
+     mailx -s "Auto Archive clean up finished - $HOSTNAME " $MAILLIST -- -f ArchiveAutoMaintenace@cisco.com < $ADMIN_HOME/log/$ARGV.lst
+  else
+     mailx -s "ERROR: Failed to clean up archives by Auto tool - $HOSTNAME " $MAILLIST <$ADMIN_HOME/log/$ARGV-autocleanup.lst
+  fi 
+
+fi
+

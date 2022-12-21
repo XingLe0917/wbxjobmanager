@@ -1,0 +1,12 @@
+/u00/app/admin/dbarea/bin/gsb_channel_truncate.sh test newpwd racavwebha avwd
+/u00/app/admin/dbarea/bin/gsb_channel_truncate.sh test newpwd racbvwebha bvwd
+/u00/app/admin/dbarea/bin/gsb_channel_truncate.sh test oldpwd rachtwebha htwd
+/u00/app/admin/dbarea/bin/gsb_channel_truncate.sh test newpwd racgtwebha gtwd
+/u00/app/admin/dbarea/bin/gsb_channel_truncate.sh test oldpwd racbuwebha buwd
+/u00/app/admin/dbarea/bin/gsb_channel_truncate.sh test newpwd  racetwebha etwd
+/u00/app/admin/dbarea/bin/gsb_channel_truncate.sh test oldpwd raccuwebha cuwd
+/u00/app/admin/dbarea/bin/gsb_channel_truncate.sh test oldpwd racatwebha atwd
+/u00/app/admin/dbarea/bin/gsb_channel_truncate.sh test oldpwd racztwebha ztwd
+/u00/app/admin/dbarea/bin/gsb_channel_truncate.sh test oldpwd racdtwebha dtwd
+/u00/app/admin/dbarea/bin/gsb_channel_truncate.sh test oldpwd racauwebha auwd
+/u00/app/admin/dbarea/bin/gsb_channel_truncate.sh test newpwd  racvwebha dvwd

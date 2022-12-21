@@ -1,0 +1,20 @@
+#!/bin/bash
+# script to verify the OSW agent and restart if not running
+# script also move the archives to the staging for archiving
+# version 1: Britto S (bsusaima@cisco.com)
+
+_EMAIL_ID=cwopsdba@cisco.com
+
+_OSW_INSTALL_DIR=/var/oswbb
+
+_OSW_LOCAL_BACKUP_DAYS=7
+_OSW_LOCAL_BACKUP_HOURS=$(expr ${_OSW_LOCAL_BACKUP_DAYS} \* 24)
+
+_ret=$(ps -e | grep -cw OSWatcher.sh)
+if [ ${_ret} -eq 0 ]; then
+  cd ${_OSW_INSTALL_DIR}
+  ${_OSW_INSTALL_DIR}/startOSWbb.sh 60 ${_OSW_LOCAL_BACKUP_HOURS} gzip ${_OSW_INSTALL_DIR}/archive >> /tmp/OSWatcherstatus
+  tail -100 /tmp/OSWatcherstatus > /tmp/OSWatcherstatus.m
+  mailx -s "OSWatcher Not Running,Restarted" ${_EMAIL_ID} < /tmp/OSWatcherstatus.m
+fi
+
